@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,6 +11,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="assets/app-icon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --primary: #008080;
@@ -750,6 +752,9 @@
                     <button class="action-btn btn-outline icon-btn" onclick="exportData('chemicals')">
                         <script>document.write(getIcon('download'))</script> Export CSV
                     </button>
+                    <button class="action-btn btn-outline icon-btn" onclick="exportToPDF('chemicals')">
+                        <script>document.write(getIcon('download'))</script> Export PDF
+                    </button>
                     <button class="action-btn btn-primary icon-btn" onclick="openModal('chemical')">
                         <script>document.write(getIcon('plus'))</script> Add Chemical
                     </button>
@@ -782,6 +787,9 @@
                     </div>
                     <button class="action-btn btn-outline icon-btn" onclick="exportData('apparatus')">
                         <script>document.write(getIcon('download'))</script> Export CSV
+                    </button>
+                    <button class="action-btn btn-outline icon-btn" onclick="exportToPDF('apparatus')">
+                        <script>document.write(getIcon('download'))</script> Export PDF
                     </button>
                     <button class="action-btn btn-primary icon-btn" onclick="openModal('apparatus')">
                         <script>document.write(getIcon('plus'))</script> Add Apparatus
@@ -1671,6 +1679,128 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        function exportToPDF(type) {
+            const { jsPDF } = window.jspdf;
+            const data = type === 'chemicals' ? chemicalData : apparatusData;
+
+            if (data.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+
+            // Header - School Logo Area (Text-based)
+            doc.setFillColor(0, 128, 128);
+            doc.rect(0, 0, pageWidth, 35, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('San Jose Integrated School', pageWidth / 2, 12, { align: 'center' });
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Chemical and Laboratory Inventory System', pageWidth / 2, 22, { align: 'center' });
+
+            doc.setFontSize(10);
+            const reportTitle = type === 'chemicals' ? 'Chemical Inventory Report' : 'Laboratory Apparatus Report';
+            doc.text(reportTitle, pageWidth / 2, 30, { align: 'center' });
+
+            // Metadata
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(9);
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            doc.text(`Generated: ${dateStr}`, 14, 42);
+            doc.text(`Total Records: ${data.length}`, pageWidth - 14, 42, { align: 'right' });
+
+            // Table
+            if (type === 'chemicals') {
+                const tableData = data.map(item => [
+                    item.name,
+                    item.formula || '-',
+                    item.quantity,
+                    item.unit,
+                    item.hazard || 'Safe',
+                    item.expiry || '-',
+                    item.location
+                ]);
+
+                doc.autoTable({
+                    startY: 48,
+                    head: [['Name', 'Formula', 'Qty', 'Unit', 'Hazard', 'Expiry', 'Location']],
+                    body: tableData,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [0, 128, 128],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 10
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 249, 250]
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+            } else {
+                const tableData = data.map(item => [
+                    item.name,
+                    item.category || '-',
+                    item.quantity,
+                    item.condition || 'Good',
+                    item.location
+                ]);
+
+                doc.autoTable({
+                    startY: 48,
+                    head: [['Name', 'Category', 'Qty', 'Condition', 'Location']],
+                    body: tableData,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [44, 62, 80],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 10
+                    },
+                    styles: {
+                        fontSize: 9,
+                        cellPadding: 3
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 249, 250]
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+            }
+
+            // Footer
+            const finalY = doc.lastAutoTable.finalY || 48;
+            if (finalY < pageHeight - 30) {
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text('This is a system-generated report.', pageWidth / 2, pageHeight - 15, { align: 'center' });
+                doc.text('© 2026 San Jose Integrated School', pageWidth / 2, pageHeight - 10, { align: 'center' });
+            }
+
+            // Save PDF
+            const filename = `SJIS_${type}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+
+            showNotification(`PDF report exported successfully!`);
         }
 
         // PWA Service Worker Registration
