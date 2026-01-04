@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark Blue Background with Rounded Corners -->
+  <rect width="512" height="512" rx="110" fill="#1a2332"/>
+  
+  <!-- Storage Box Container (White) -->
+  <rect x="120" y="180" width="272" height="260" rx="16" fill="#ffffff" opacity="0.95"/>
+  <rect x="120" y="160" width="272" height="40" rx="8" fill="#ffffff"/>
+  
+  <!-- Erlenmeyer Flask (Teal - Inside Box, Adjusted Higher) -->
+  <g transform="translate(256, 340)">
+    <!-- Flask Neck -->
+    <rect x="-25" y="-120" width="50" height="50" fill="#008080"/>
+    <!-- Flask Body -->
+    <path d="M -25 -70 L -85 60 Q -90 75 -70 75 L 70 75 Q 90 75 85 60 L 25 -70 Z" fill="#008080"/>
+    <!-- Flask Liquid -->
+    <path d="M -20 -30 L -68 45 L 68 45 L 20 -30 Z" fill="#00b3b3" opacity="0.7"/>
+    <!-- Flask Opening -->
+    <rect x="-30" y="-126" width="60" height="10" rx="3" fill="#006666"/>
+  </g>
+  
+  <!-- Checklist Badge (Teal Circle with White Checkmark) -->
+  <circle cx="370" cy="200" r="55" fill="#008080"/>
+  <circle cx="370" cy="200" r="52" fill="#ffffff" opacity="0.15"/>
+  <!-- Check Symbol -->
+  <polyline points="340,200 360,220 400,180" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Subtle Grid Lines on Box (Detail) -->
+  <line x1="256" y1="200" x2="256" y2="420" stroke="#1a2332" stroke-width="2" opacity="0.1"/>
+  <line x1="140" y1="300" x2="372" y2="300" stroke="#1a2332" stroke-width="2" opacity="0.1"/>
+</svg>
