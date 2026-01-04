@@ -842,8 +842,22 @@
         </footer>
     </div>
 
-    <!-- Modal -->
-    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Item</h2>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <div id="modal-body">
+                <!-- Dynamic form content -->
+            </div>
+            <div style="margin-top: 20px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="action-btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="action-btn btn-primary" onclick="saveItem()">Save</button>
+            </div>
+        </div>
     </div>
 
     <!-- SDS Modal -->
