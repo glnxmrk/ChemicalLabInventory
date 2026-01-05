@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chemical and Laboratory Apparatus Inventory System - San Jose Integrated School</title>
+    <title>Chemical and Laboratory Apparatus Inventory System - SAN JOSE INTEGRATED SCHOOL</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#008080">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -147,6 +147,7 @@
             align-items: center;
             justify-content: center;
             padding: 2px;
+            margin: 2px;
         }
 
         .ghs-icon svg {
@@ -472,6 +473,8 @@
             border-radius: 15px;
             width: 100%;
             max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             animation: slideUp 0.3s ease;
         }
@@ -626,6 +629,32 @@
             text-decoration: underline;
         }
 
+        /* Hazard Selection Grid */
+        .hazard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-top: 5px;
+        }
+
+        .hazard-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .hazard-item input {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
         footer {
             text-align: center;
             padding: 20px;
@@ -708,7 +737,7 @@
                     <img src="assets/microscope.png" alt="Apparatus">
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="low-stock-card" style="cursor: pointer;">
                 <div class="stat-info">
                     <h3 style="color: var(--warning);">Low Stock Items</h3>
                     <p id="low-stock">0</p>
@@ -737,8 +766,8 @@
                 <button class="tab-btn" onclick="switchTab('apparatus')">
                     <script>document.write(getIcon('microscope'))</script> Laboratory Apparatus
                 </button>
-                <button class="tab-btn" onclick="switchTab('msds')">
-                    <script>document.write(getIcon('shield'))</script> MSDS
+                <button class="tab-btn" onclick="switchTab('sds')">
+                    <script>document.write(getIcon('shield'))</script> SDS
                 </button>
             </div>
 
@@ -751,6 +780,11 @@
                     </div>
                     <button class="action-btn btn-outline icon-btn" onclick="exportData('chemicals')">
                         <script>document.write(getIcon('download'))</script> Export CSV
+                    </button>
+                    <button class="action-btn btn-outline icon-btn"
+                        style="color: var(--warning); border-color: var(--warning);"
+                        onclick="filterLowStock('chemical')">
+                        <script>document.write(getIcon('alert'))</script> Show Low Stock
                     </button>
                     <button class="action-btn btn-outline icon-btn" onclick="exportToPDF('chemicals')">
                         <script>document.write(getIcon('download'))</script> Export PDF
@@ -765,11 +799,15 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Formula</th>
+                                <th>CAS No.</th>
+                                <th>Hazard ID</th>
+                                <th>Chem. Group</th>
                                 <th>Qty</th>
                                 <th>Unit</th>
-                                <th>Hazard</th>
                                 <th>Exp. Date</th>
                                 <th>Location</th>
+                                <th>Date Entry</th>
+                                <th>Remarks</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -788,6 +826,11 @@
                     <button class="action-btn btn-outline icon-btn" onclick="exportData('apparatus')">
                         <script>document.write(getIcon('download'))</script> Export CSV
                     </button>
+                    <button class="action-btn btn-outline icon-btn"
+                        style="color: var(--warning); border-color: var(--warning);"
+                        onclick="filterLowStock('apparatus')">
+                        <script>document.write(getIcon('alert'))</script> Show Low Stock
+                    </button>
                     <button class="action-btn btn-outline icon-btn" onclick="exportToPDF('apparatus')">
                         <script>document.write(getIcon('download'))</script> Export PDF
                     </button>
@@ -797,13 +840,15 @@
                 </div>
                 <div class="table-container">
                     <table id="apparatus-table">
-                        <thead class="header-blue">
+                        <thead class="header-teal">
                             <tr>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Qty</th>
+                                <th>Unit</th>
                                 <th>Condition</th>
                                 <th>Location</th>
+                                <th>Remarks</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -812,20 +857,21 @@
                 </div>
             </div>
 
-            <!-- MSDS Tab -->
-            <div id="tab-msds" class="tab-content">
+            <!-- SDS Tab -->
+            <div id="tab-sds" class="tab-content">
                 <div class="toolbar">
                     <div class="search-bar">
                         <input type="text" placeholder="Search safety data sheets..."
-                            onkeyup="filterTable('msds', this.value)">
+                            onkeyup="filterTable('sds', this.value)">
                     </div>
                 </div>
                 <div class="table-container">
-                    <table id="msds-table">
-                        <thead style="background: var(--dark); color: white;">
+                    <table id="sds-table">
+                        <thead class="header-teal">
                             <tr>
                                 <th>Chemical Name</th>
                                 <th>Formula</th>
+                                <th>CAS Number</th>
                                 <th>Hazard Class</th>
                                 <th>Pictogram</th>
                                 <th>Full SDS</th>
@@ -890,7 +936,8 @@
                 'edit': '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
                 'delete': '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
                 'shield': '<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>',
-                'info': '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+                'info': '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>',
+                'external': '<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>'
             };
             return icons[name] || '';
         }
@@ -934,71 +981,71 @@
 
         // --- Knowledge Base for Auto-Suggestions (Expanded) ---
         const chemicalKB = {
-            "Acetic acid": { formula: "CH3COOH", hazard: "Corrosive" },
-            "Acetone": { formula: "C3H6O", hazard: "Flammable" },
-            "Aluminum chloride": { formula: "AlCl3", hazard: "Corrosive" },
-            "Aluminum sulfate": { formula: "Al2(SO4)3", hazard: "Irritant" },
-            "Ammonia": { formula: "NH3", hazard: "Corrosive" },
-            "Ammonium chloride": { formula: "NH4Cl", hazard: "Harmful" },
-            "Ammonium hydroxide": { formula: "NH4OH", hazard: "Corrosive" },
-            "Ammonium nitrate": { formula: "NH4NO3", hazard: "Oxidizing" },
-            "Barium chloride": { formula: "BaCl2", hazard: "Toxic" },
-            "Barium hydroxide": { formula: "Ba(OH)2", hazard: "Corrosive" },
-            "Benzene": { formula: "C6H6", hazard: "Carcinogen" },
-            "Benzoic acid": { formula: "C7H6O2", hazard: "Irritant" },
-            "Bromine water": { formula: "Br2(aq)", hazard: "Toxic" },
-            "Calcium carbonate": { formula: "CaCO3", hazard: "Irritant" },
-            "Calcium chloride": { formula: "CaCl2", hazard: "Irritant" },
-            "Calcium hydroxide": { formula: "Ca(OH)2", hazard: "Corrosive" },
-            "Calcium oxide": { formula: "CaO", hazard: "Corrosive" },
-            "Carbon disulfide": { formula: "CS2", hazard: "Flammable" },
-            "Citric acid": { formula: "C6H8O7", hazard: "Irritant" },
-            "Copper(II) carbonate": { formula: "CuCO3", hazard: "Harmful" },
-            "Copper(II) chloride": { formula: "CuCl2", hazard: "Toxic" },
-            "Copper(II) oxide": { formula: "CuO", hazard: "Harmful" },
-            "Copper(II) sulfate": { formula: "CuSO4", hazard: "Harmful" },
-            "Ethanol": { formula: "C2H5OH", hazard: "Flammable" },
-            "Ferric chloride": { formula: "FeCl3", hazard: "Corrosive" },
-            "Ferrous sulfate": { formula: "FeSO4", hazard: "Harmful" },
-            "Formaldehyde": { formula: "CH2O", hazard: "Toxic" },
-            "Formic acid": { formula: "HCOOH", hazard: "Corrosive" },
-            "Glucose": { formula: "C6H12O6", hazard: "None" },
-            "Glycerin": { formula: "C3H8O3", hazard: "None" },
-            "Hydrochloric acid": { formula: "HCl", hazard: "Corrosive" },
-            "Hydrogen peroxide": { formula: "H2O2", hazard: "Oxidizing" },
-            "Iodine": { formula: "I2", hazard: "Harmful" },
-            "Iron(III) oxide": { formula: "Fe2O3", hazard: "Irritant" },
-            "Lead(II) nitrate": { formula: "Pb(NO3)2", hazard: "Toxic" },
-            "Lithium chloride": { formula: "LiCl", hazard: "Harmful" },
-            "Magnesium ribbon": { formula: "Mg", hazard: "Flammable" },
-            "Magnesium oxide": { formula: "MgO", hazard: "Irritant" },
-            "Magnesium sulfate": { formula: "MgSO4", hazard: "None" },
-            "Manganese dioxide": { formula: "MnO2", hazard: "Harmful" },
-            "Methanol": { formula: "CH3OH", hazard: "Toxic" },
-            "Nitric acid": { formula: "HNO3", hazard: "Oxidizing" },
-            "Oxalic acid": { formula: "C2H2O4", hazard: "Harmful" },
-            "Phenolphthalein": { formula: "C20H14O4", hazard: "Irritant" },
-            "Phosphoric acid": { formula: "H3PO4", hazard: "Corrosive" },
-            "Potassium chloride": { formula: "KCl", hazard: "None" },
-            "Potassium dichromate": { formula: "K2Cr2O7", hazard: "Toxic" },
-            "Potassium hydroxide": { formula: "KOH", hazard: "Corrosive" },
-            "Potassium iodide": { formula: "KI", hazard: "Irritant" },
-            "Potassium nitrate": { formula: "KNO3", hazard: "Oxidizing" },
-            "Potassium permanganate": { formula: "KMnO4", hazard: "Oxidizing" },
-            "Salicylic acid": { formula: "C7H6O3", hazard: "Harmful" },
-            "Silver nitrate": { formula: "AgNO3", hazard: "Corrosive" },
-            "Sodium acetate": { formula: "CH3COONa", hazard: "Irritant" },
-            "Sodium bicarbonate": { formula: "NaHCO3", hazard: "None" },
-            "Sodium carbonate": { formula: "Na2CO3", hazard: "Irritant" },
-            "Sodium chloride": { formula: "NaCl", hazard: "None" },
-            "Sodium hydroxide": { formula: "NaOH", hazard: "Corrosive" },
-            "Sodium nitrate": { formula: "NaNO3", hazard: "Oxidizing" },
-            "Sulfur powder": { formula: "S", hazard: "Flammable" },
-            "Sulfuric acid": { formula: "H2SO4", hazard: "Corrosive" },
-            "Zinc granules": { formula: "Zn", hazard: "None" },
-            "Zinc nitrate": { formula: "Zn(NO3)2", hazard: "Oxidizing" },
-            "Zinc oxide": { formula: "ZnO", hazard: "Environmentally Hazardous" },
-            "Zinc sulfate": { formula: "ZnSO4", hazard: "Harmful" }
+            "Acetic acid": { formula: "CH3COOH", hazard: "Corrosive", casNumber: "64-19-7", chemicalGroup: "Acids" },
+            "Acetone": { formula: "C3H6O", hazard: "Flammable", casNumber: "67-64-1", chemicalGroup: "Flammable Liquids" },
+            "Aluminum chloride": { formula: "AlCl3", hazard: "Corrosive", casNumber: "7446-70-0", chemicalGroup: "Corrosives" },
+            "Aluminum sulfate": { formula: "Al2(SO4)3", hazard: "Irritant/Harmful", casNumber: "10043-01-3", chemicalGroup: "General/Inert" },
+            "Ammonia": { formula: "NH3", hazard: "Corrosive,Toxic", casNumber: "7664-41-7", chemicalGroup: "Bases" },
+            "Ammonium chloride": { formula: "NH4Cl", hazard: "Irritant/Harmful", casNumber: "12125-02-9", chemicalGroup: "General/Inert" },
+            "Ammonium hydroxide": { formula: "NH4OH", hazard: "Corrosive", casNumber: "1336-21-6", chemicalGroup: "Bases" },
+            "Ammonium nitrate": { formula: "NH4NO3", hazard: "Oxidizing", casNumber: "6484-52-2", chemicalGroup: "Oxidizers" },
+            "Barium chloride": { formula: "BaCl2", hazard: "Toxic", casNumber: "10361-37-2", chemicalGroup: "Toxics/Poisons" },
+            "Barium hydroxide": { formula: "Ba(OH)2", hazard: "Corrosive", casNumber: "17194-00-2", chemicalGroup: "Bases" },
+            "Benzene": { formula: "C6H6", hazard: "Flammable,Health Hazard", casNumber: "71-43-2", chemicalGroup: "Flammable Liquids" },
+            "Benzoic acid": { formula: "C7H6O2", hazard: "Irritant/Harmful", casNumber: "65-85-0", chemicalGroup: "Acids" },
+            "Bromine water": { formula: "Br2(aq)", hazard: "Toxic,Corrosive", casNumber: "7726-95-6", chemicalGroup: "Toxics/Poisons" },
+            "Calcium carbonate": { formula: "CaCO3", hazard: "Irritant/Harmful", casNumber: "471-34-1", chemicalGroup: "General/Inert" },
+            "Calcium chloride": { formula: "CaCl2", hazard: "Irritant/Harmful", casNumber: "10043-52-4", chemicalGroup: "General/Inert" },
+            "Calcium hydroxide": { formula: "Ca(OH)2", hazard: "Corrosive", casNumber: "1305-62-0", chemicalGroup: "Bases" },
+            "Calcium oxide": { formula: "CaO", hazard: "Corrosive", casNumber: "1305-78-8", chemicalGroup: "Water-Reactive" },
+            "Carbon disulfide": { formula: "CS2", hazard: "Flammable,Toxic", casNumber: "75-15-0", chemicalGroup: "Flammable Liquids" },
+            "Citric acid": { formula: "C6H8O7", hazard: "Irritant/Harmful", casNumber: "77-92-9", chemicalGroup: "Acids" },
+            "Copper(II) carbonate": { formula: "CuCO3", hazard: "Irritant/Harmful", casNumber: "1184-64-1", chemicalGroup: "General/Inert" },
+            "Copper(II) chloride": { formula: "CuCl2", hazard: "Toxic,Environment", casNumber: "7447-39-4", chemicalGroup: "Toxics/Poisons" },
+            "Copper(II) oxide": { formula: "CuO", hazard: "Irritant/Harmful,Environment", casNumber: "1317-38-0", chemicalGroup: "General/Inert" },
+            "Copper(II) sulfate": { formula: "CuSO4", hazard: "Irritant/Harmful,Environment", casNumber: "7758-98-7", chemicalGroup: "General/Inert" },
+            "Ethanol": { formula: "C2H5OH", hazard: "Flammable", casNumber: "64-17-5", chemicalGroup: "Flammable Liquids" },
+            "Ferric chloride": { formula: "FeCl3", hazard: "Corrosive", casNumber: "7705-08-0", chemicalGroup: "Corrosives" },
+            "Ferrous sulfate": { formula: "FeSO4", hazard: "Irritant/Harmful", casNumber: "7720-78-7", chemicalGroup: "General/Inert" },
+            "Formaldehyde": { formula: "CH2O", hazard: "Toxic,Health Hazard", casNumber: "50-00-0", chemicalGroup: "Toxics/Poisons" },
+            "Formic acid": { formula: "HCOOH", hazard: "Corrosive", casNumber: "64-18-6", chemicalGroup: "Acids" },
+            "Glucose": { formula: "C6H12O6", hazard: "", casNumber: "50-99-7", chemicalGroup: "General/Inert" },
+            "Glycerin": { formula: "C3H8O3", hazard: "", casNumber: "56-81-5", chemicalGroup: "General/Inert" },
+            "Hydrochloric acid": { formula: "HCl", hazard: "Corrosive", casNumber: "7647-01-0", chemicalGroup: "Acids" },
+            "Hydrogen peroxide": { formula: "H2O2", hazard: "Oxidizing,Corrosive", casNumber: "7722-84-1", chemicalGroup: "Oxidizers" },
+            "Iodine": { formula: "I2", hazard: "Toxic,Health Hazard,Environment", casNumber: "7553-56-2", chemicalGroup: "General/Inert" },
+            "Iron(III) oxide": { formula: "Fe2O3", hazard: "Irritant/Harmful", casNumber: "1309-37-1", chemicalGroup: "General/Inert" },
+            "Lead(II) nitrate": { formula: "Pb(NO3)2", hazard: "Toxic,Health Hazard,Environment", casNumber: "10099-74-8", chemicalGroup: "Toxics/Poisons" },
+            "Lithium chloride": { formula: "LiCl", hazard: "Irritant/Harmful", casNumber: "7447-41-8", chemicalGroup: "General/Inert" },
+            "Magnesium ribbon": { formula: "Mg", hazard: "Flammable", casNumber: "7439-95-4", chemicalGroup: "Water-Reactive" },
+            "Magnesium oxide": { formula: "MgO", hazard: "Irritant/Harmful", casNumber: "1309-48-4", chemicalGroup: "General/Inert" },
+            "Magnesium sulfate": { formula: "MgSO4", hazard: "", casNumber: "7487-88-9", chemicalGroup: "General/Inert" },
+            "Manganese dioxide": { formula: "MnO2", hazard: "Irritant/Harmful", casNumber: "1313-13-9", chemicalGroup: "Oxidizers" },
+            "Methanol": { formula: "CH3OH", hazard: "Flammable,Toxic", casNumber: "67-56-1", chemicalGroup: "Flammable Liquids" },
+            "Nitric acid": { formula: "HNO3", hazard: "Oxidizing,Corrosive", casNumber: "7697-37-2", chemicalGroup: "Acids" },
+            "Oxalic acid": { formula: "C2H2O4", hazard: "Irritant/Harmful", casNumber: "144-62-7", chemicalGroup: "Acids" },
+            "Phenolphthalein": { formula: "C20H14O4", hazard: "Health Hazard", casNumber: "77-09-8", chemicalGroup: "General/Inert" },
+            "Phosphoric acid": { formula: "H3PO4", hazard: "Corrosive", casNumber: "7664-38-2", chemicalGroup: "Acids" },
+            "Potassium chloride": { formula: "KCl", hazard: "", casNumber: "7447-40-7", chemicalGroup: "General/Inert" },
+            "Potassium dichromate": { formula: "K2Cr2O7", hazard: "Oxidizing,Toxic,Health Hazard,Environment", casNumber: "7778-50-9", chemicalGroup: "Oxidizers" },
+            "Potassium hydroxide": { formula: "KOH", hazard: "Corrosive,Toxic", casNumber: "1310-58-3", chemicalGroup: "Bases" },
+            "Potassium iodide": { formula: "KI", hazard: "Irritant/Harmful", casNumber: "7681-11-0", chemicalGroup: "General/Inert" },
+            "Potassium nitrate": { formula: "KNO3", hazard: "Oxidizing", casNumber: "7757-79-1", chemicalGroup: "Oxidizers" },
+            "Potassium permanganate": { formula: "KMnO4", hazard: "Oxidizing,Corrosive,Environment", casNumber: "7722-64-7", chemicalGroup: "Oxidizers" },
+            "Salicylic acid": { formula: "C7H6O3", hazard: "Irritant/Harmful", casNumber: "69-72-7", chemicalGroup: "Acids" },
+            "Silver nitrate": { formula: "AgNO3", hazard: "Oxidizing,Corrosive,Environment", casNumber: "7761-88-8", chemicalGroup: "Oxidizers" },
+            "Sodium acetate": { formula: "CH3COONa", hazard: "Irritant/Harmful", casNumber: "127-09-3", chemicalGroup: "General/Inert" },
+            "Sodium bicarbonate": { formula: "NaHCO3", hazard: "", casNumber: "144-55-8", chemicalGroup: "General/Inert" },
+            "Sodium carbonate": { formula: "Na2CO3", hazard: "Irritant/Harmful", casNumber: "497-19-8", chemicalGroup: "Bases" },
+            "Sodium chloride": { formula: "NaCl", hazard: "", casNumber: "7647-14-5", chemicalGroup: "General/Inert" },
+            "Sodium hydroxide": { formula: "NaOH", hazard: "Corrosive", casNumber: "1310-73-2", chemicalGroup: "Bases" },
+            "Sodium nitrate": { formula: "NaNO3", hazard: "Oxidizing", casNumber: "7631-99-4", chemicalGroup: "Oxidizers" },
+            "Sulfur powder": { formula: "S", hazard: "Flammable,Irritant/Harmful", casNumber: "7704-34-9", chemicalGroup: "Flammable Liquids" },
+            "Sulfuric acid": { formula: "H2SO4", hazard: "Corrosive", casNumber: "7664-93-9", chemicalGroup: "Acids" },
+            "Zinc granules": { formula: "Zn", hazard: "Environment", casNumber: "7440-66-6", chemicalGroup: "Water-Reactive" },
+            "Zinc nitrate": { formula: "Zn(NO3)2", hazard: "Oxidizing,Irritant/Harmful,Environment", casNumber: "7779-88-6", chemicalGroup: "Oxidizers" },
+            "Zinc oxide": { formula: "ZnO", hazard: "Environment", casNumber: "1314-13-2", chemicalGroup: "General/Inert" },
+            "Zinc sulfate": { formula: "ZnSO4", hazard: "Toxic,Environment", casNumber: "7733-02-0", chemicalGroup: "General/Inert" }
         };
 
         const apparatusKB = {
@@ -1180,7 +1227,43 @@
             });
 
             document.getElementById('low-stock').innerText = lowStock;
+            document.getElementById('low-stock-card').onclick = () => {
+                switchTab('chemicals');
+                filterLowStock('chemical');
+            };
             document.getElementById('expired-count').innerText = expired;
+        }
+
+        function filterLowStock(type) {
+            const table = document.getElementById(type + '-table');
+            const tbody = table.querySelector('tbody');
+            const tr = tbody.getElementsByTagName('tr');
+            let visibleCount = 0;
+
+            // Remove existing no-results row if any
+            const existingNoResults = tbody.querySelector('.no-results-row');
+            if (existingNoResults) existingNoResults.remove();
+
+            for (let i = 0; i < tr.length; i++) {
+                const qtyCell = tr[i].getElementsByTagName('td')[type === 'chemical' ? 5 : 2];
+                if (qtyCell) {
+                    const qtyString = qtyCell.innerText || qtyCell.textContent;
+                    const qtyValue = parseInt(qtyString) || 0;
+                    if (qtyValue < 5) {
+                        tr[i].style.display = "";
+                        visibleCount++;
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+
+            if (visibleCount === 0 && tr.length > 0) {
+                const colCount = table.rows[0].cells.length;
+                const noResultsRow = tbody.insertRow();
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = `<td colspan="${colCount}" style="text-align: center; padding: 20px; color: #666;">No low stock items found.</td>`;
+            }
         }
 
         function renderTables() {
@@ -1188,17 +1271,31 @@
             chemTbody.innerHTML = '';
             chemicalData.forEach((item, index) => {
                 let row = chemTbody.insertRow();
+
+                // Process hazards into badges
+                const hazards = (item.hazard || "").split(",").filter(h => h.trim() !== "");
+                const hazardBadges = hazards.length > 0
+                    ? hazards.map(h => `<span class="badge ${getHazardClass(h.trim())}" style="margin: 2px;">${h.trim()}</span>`).join("")
+                    : '<span class="badge badge-neutral">-</span>';
+
+                const qtyValue = parseInt(item.quantity) || 0;
+                const qtyDisplay = qtyValue < 5 ? `<span class="badge badge-warning" style="font-weight: bold;">${item.quantity}</span>` : item.quantity;
+
                 row.innerHTML = `
                 <td><strong>${formatChemicalName(item.name)}</strong></td>
                 <td>${formatFormula(item.formula)}</td>
-                <td>${item.quantity}</td>
+                <td>${item.casNumber || '-'}</td>
+                <td>${hazardBadges}</td>
+                <td><span class="badge badge-neutral">${item.chemicalGroup || '-'}</span></td>
+                <td>${qtyDisplay}</td>
                 <td>${item.unit}</td>
-                <td><span class="badge ${getHazardClass(item.hazard)}">${item.hazard}</span></td>
-                <td style="${isExpired(item.expiry) ? 'color: red; font-weight: bold;' : ''}">${item.expiry}</td>
+                <td style="${isExpired(item.expiry) ? 'color: red; font-weight: bold;' : ''}">${item.expiry || '-'}</td>
                 <td>${item.location}</td>
+                <td>${item.dateEntry || '-'}</td>
+                <td style="font-size: 0.85em; color: #666;">${item.remarks || '-'}</td>
                 <td>
-                    <span class="action-icon edit-icon" title=\"Edit\" onclick="openModal('chemical', ${index})">${getIcon('edit')}</span>
-                    <span class="action-icon delete-icon" title=\"Delete\" onclick="deleteItem('chemical', ${index})">${getIcon('delete')}</span>
+                    <span class="action-icon edit-icon" title="Edit" onclick="openModal('chemical', ${index})">${getIcon('edit')}</span>
+                    <span class="action-icon delete-icon" title="Delete" onclick="deleteItem('chemical', ${index})">${getIcon('delete')}</span>
                 </td>
             `;
             });
@@ -1207,15 +1304,20 @@
             appTbody.innerHTML = '';
             apparatusData.forEach((item, index) => {
                 let row = appTbody.insertRow();
+                const qtyValue = parseInt(item.quantity) || 0;
+                const qtyDisplay = qtyValue < 5 ? `<span class="badge badge-warning" style="font-weight: bold;">${item.quantity}</span>` : item.quantity;
+
                 row.innerHTML = `
-                <td><strong>${item.name}</strong></td>
+                <td><strong>${item.name}</strong> ${item.spec ? `<small style="display: block; color: #666; font-style: italic;">(${item.spec})</small>` : ''}</td>
                 <td><span class="badge badge-neutral">${item.category}</span></td>
-                <td>${item.quantity}</td>
+                <td>${qtyDisplay}</td>
+                <td>${item.unit || 'pcs'}</td>
                 <td>${item.condition}</td>
                 <td>${item.location}</td>
+                <td style="font-size: 0.85em; color: #666;">${item.remarks || '-'}</td>
                 <td>
-                    <span class="action-icon edit-icon" title=\"Edit\" onclick="openModal('apparatus', ${index})">${getIcon('edit')}</span>
-                    <span class="action-icon delete-icon" title=\"Delete\" onclick="deleteItem('apparatus', ${index})">${getIcon('delete')}</span>
+                    <span class="action-icon edit-icon" title="Edit" onclick="openModal('apparatus', ${index})">${getIcon('edit')}</span>
+                    <span class="action-icon delete-icon" title="Delete" onclick="deleteItem('apparatus', ${index})">${getIcon('delete')}</span>
                 </td>
             `;
             });
@@ -1238,52 +1340,50 @@
 
         function getGHSPictogram(hazard) {
             const h = hazard ? hazard.toLowerCase() : '';
-            let type = 'exclamation';
+            if (!h) return '';
 
-            if (h.includes('exploding') || h.includes('explosive')) type = 'explosive';
-            else if (h.includes('flame over circle') || h.includes('oxidiz')) type = 'oxidizer';
-            else if (h.includes('flame') || h.includes('flammable')) type = 'flammable';
-            else if (h.includes('gas cylinder') || h.includes('gas') || h.includes('pressure')) type = 'gas';
-            else if (h.includes('corrosive') || h.includes('corrosion')) type = 'corrosive';
-            else if (h.includes('skull') || h.includes('toxic') || h.includes('poison')) type = 'toxic';
-            else if (h.includes('health hazard') || h.includes('carcinogen') || h.includes('serious') || h.includes('mutagen')) type = 'health_hazard';
-            else if (h.includes('environment')) type = 'environment';
-            else if (h.includes('exclamation') || h.includes('irritant') || h.includes('harmful')) type = 'exclamation';
+            let types = [];
+            if (h.includes('exploding') || h.includes('explosive')) types.push('explosive');
+            if (h.includes('flame over circle') || h.includes('oxidiz')) types.push('oxidizer');
+            if (h.includes('flame') || h.includes('flammable')) types.push('flammable');
+            if (h.includes('gas cylinder') || h.includes('gas') || h.includes('pressure')) types.push('gas');
+            if (h.includes('corrosive') || h.includes('corrosion')) types.push('corrosive');
+            if (h.includes('skull') || h.includes('toxic') || h.includes('poison')) types.push('toxic');
+            if (h.includes('health hazard') || h.includes('carcinogen') || h.includes('serious') || h.includes('mutagen')) types.push('health_hazard');
+            if (h.includes('environment')) types.push('environment');
+            if (h.includes('exclamation') || h.includes('irritant') || h.includes('harmful')) types.push('exclamation');
+
+            // Default fallback if no specific type matched but hazard exists
+            if (types.length === 0 && h) types.push('exclamation');
 
             const icons = {
                 'explosive': `<path d="M50 35l-2-2m4 0l-2 2m0 0l2 2m-4 0l2-2m-10 10l-4-4m8 0l-4 4m0 0l4 4m-8 0l4-4m16 0l-4-4m8 0l-4 4m0 0l4 4m-8 0l4-4M50 65l-2-2m4 0l-2 2m0 0l2 2m-4 0l2-2M25 50l4 2 4-2-4-2-4 2zm41 0l4 2 4-2-4-2-4 2zM50 25l2 4-2 4-2-4 2-4zm0 41l2 4-2 4-2-4 2-4z" stroke="black" stroke-width="2" fill="none"/><circle cx="50" cy="50" r="8" fill="black"/>`,
-                'flammable': `<path d="M50 20c0 10-5 15-10 20s-5 10-5 15a15 15 0 0030 0c0-5-1-10-5-15s-5-10-5-20z" fill="black"/><path d="M50 65c-5 0-8-3-8-8s3-8 8-8 8 3 8 8-3 8-8 8z" opacity="0.6" fill="black"/>`,
                 'oxidizer': `<circle cx="50" cy="62" r="12" fill="none" stroke="black" stroke-width="4"/><path d="M50 25c0 8-4 12-8 16s-4 8-4 12a12 12 0 0024 0c0-4-1-8-4-12s-4-8-4-16z" transform="scale(0.8) translate(12 8)" fill="black"/>`,
                 'gas': `<path d="M25 45h40a10 10 0 010 20H25a10 10 0 010-20z" fill="black"/><rect x="65" y="45" width="4" height="20" fill="black"/>`,
-                'corrosive': `
-                    <g transform="translate(15,22) scale(0.7)">
-                        <path d="M5 45h30" stroke="black" stroke-width="8"/><path d="M20 45a5 5 0 010-6" stroke="black" stroke-width="4" fill="none"/>
-                        <path d="M15 35c-1-2-2-4-1-6m3 6c-1-2-2-4-1-6m3 6c-1-2-2-4-1-6" stroke="black" stroke-width="1.5" fill="none"/>
-                        <path d="M60 45c-4 0-8-3-10-5-2-2-4-2-6-2h-3v8h12c2 0 4-2 6-2s4-1 4-1l5-1z" fill="black"/>
-                        <path d="M55 35c-1-2-2-4-1-6m3 6c-1-2-2-4-1-6m3 6c-1-2-2-4-1-6" stroke="black" stroke-width="1.5" fill="none"/>
-                        <path d="M18 10l18 4 2-6-18-4zM52 10l18 4 2-6-18-4z" fill="black"/>
-                        <path d="M36 14c0 3-1 6-1 9" stroke="black" stroke-width="4" stroke-linecap="round"/><circle cx="34" cy="28" r="3" fill="black"/>
-                        <path d="M52 14c0 3-1 6-1 9" stroke="black" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="27" r="3" fill="black"/>
-                    </g>`,
-                'toxic': `
-                    <g transform="translate(25,25) scale(0.5)">
-                        <path d="M50 5a35 35 0 00-35 35v15a35 35 0 0070 0V40a35 35 0 00-35-35zm-15 35a5 5 0 1110 0 5 5 0 01-10 0zm30 0a5 5 0 1110 0 5 5 0 01-10 0z" fill="black"/>
-                        <circle cx="35" cy="40" r="8" fill="white"/>
-                        <circle cx="65" cy="40" r="8" fill="white"/>
-                        <path d="M40 65h20l-5 5h-10l-5-5z" fill="white"/>
-                        <path d="M0 100l100-100M0 0l100 100" stroke="black" stroke-width="15"/>
-                    </g>`,
                 'health_hazard': `<path d="M50 25a8 8 0 00-8 8v4a8 8 0 0016 0v-4a8 8 0 00-8-8zm-15 35c0-8 5-12 15-12s15 4 15 12v10H35v-10z" fill="black"/><path d="M50 48l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="white"/>`,
                 'environment': `<path d="M30 35v25M30 40l-8 8M30 50l-8 8" stroke="black" stroke-width="4" fill="none"/><path d="M50 65h20" stroke="black" stroke-width="3"/><path d="M55 55c3-3 10-3 13 0-2 3-8 5-13 0z" fill="black"/><path d="M68 55l4-2v4l-4-2z" fill="black"/>`,
                 'exclamation': `<path d="M46 25h8l-1 25h-6z" fill="black"/><circle cx="50" cy="65" r="5" fill="black"/>`
             };
 
-            return `<div class="ghs-icon">
-                <svg viewBox="0 0 100 100">
-                    <rect x="10" y="10" width="80" height="80" transform="rotate(45 50 50)" fill="white" stroke="#ff1111" stroke-width="8"/>
-                    ${icons[type]}
-                </svg>
-            </div>`;
+            let html = '<div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">';
+            types.forEach(type => {
+                if (type === 'corrosive') {
+                    html += `<div class="ghs-icon"><img src="assets/corrosive.png" style="width:100%; height:100%; object-fit:contain;"></div>`;
+                } else if (type === 'flammable') {
+                    html += `<div class="ghs-icon"><img src="assets/flammable.png" style="width:100%; height:100%; object-fit:contain;"></div>`;
+                } else if (type === 'toxic') {
+                    html += `<div class="ghs-icon"><img src="assets/toxic.png" style="width:100%; height:100%; object-fit:contain;"></div>`;
+                } else if (icons[type]) {
+                    html += `<div class="ghs-icon">
+                        <svg viewBox="0 0 100 100">
+                            <rect x="10" y="10" width="80" height="80" transform="rotate(45 50 50)" fill="white" stroke="#ff1111" stroke-width="8"/>
+                            ${icons[type]}
+                        </svg>
+                    </div>`;
+                }
+            });
+            html += '</div>';
+            return html;
         }
 
         function getSDSTemplate(item) {
@@ -1298,7 +1398,7 @@
                         <strong>Product Name:</strong> ${name}<br>
                         <strong>Formula:</strong> ${formula}<br>
                         <strong>Recommended Use:</strong> Laboratory reagent for educational use.<br>
-                        <strong>Supplier:</strong> San Jose Integrated School - Science Dept.<br>
+                        <strong>Supplier:</strong> SAN JOSE INTEGRATED SCHOOL - Science Dept.<br>
                         <strong>Emergency Contact:</strong> 911 / Local Fire Dept.
                     </div>
                 </div>
@@ -1320,7 +1420,7 @@
                     <h3>3. Composition / Information on Ingredients</h3>
                     <div class="sds-content">
                         <strong>Chemical Name:</strong> ${name}<br>
-                        <strong>CAS Number:</strong> Available upon request<br>
+                        <strong>CAS Number:</strong> ${item.casNumber || 'Available upon request'}<br>
                         <strong>Purity:</strong> Laboratory Grade (>98%)
                     </div>
                 </div>
@@ -1404,7 +1504,7 @@
                 <div class="sds-section">
                     <h3>15. Regulatory Information</h3>
                     <div class="sds-content">
-                        GHS compliant SDS for school laboratory use at SJIS.
+                        GHS compliant SDS for school laboratory use at SAN JOSE INTEGRATED SCHOOL (SJIS).
                     </div>
                 </div>
                 <div class="sds-section">
@@ -1418,7 +1518,7 @@
         }
 
         function renderSDSTable() {
-            const tbody = document.querySelector('#msds-table tbody');
+            const tbody = document.querySelector('#sds-table tbody');
             if (!tbody) return;
             tbody.innerHTML = '';
             chemicalData.forEach((item, index) => {
@@ -1426,12 +1526,20 @@
                 row.innerHTML = `
                     <td><strong>${formatChemicalName(item.name)}</strong></td>
                     <td>${formatFormula(item.formula)}</td>
+                    <td>${item.casNumber || '-'}</td>
                     <td><span class="badge ${getHazardClass(item.hazard)}">${item.hazard}</span></td>
                     <td style="text-align: center;">${getGHSPictogram(item.hazard)}</td>
                     <td>
-                        <button class="action-btn btn-primary" onclick="viewSDS(${index})">
-                            ${getIcon('info')} View Full SDS
-                        </button>
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <button class="action-btn btn-primary" onclick="viewSDS(${index})" title="View Internal SDS">
+                                ${getIcon('info')}
+                            </button>
+                            ${item.casNumber ? `
+                                <a href="https://commonchemistry.cas.org/results?q=${item.casNumber}" target="_blank" class="action-btn btn-outline" title="View Official SDS (External)" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                                    ${getIcon('external')}
+                                </a>
+                            ` : ''}
+                        </div>
                     </td>
                 `;
             });
@@ -1476,6 +1584,10 @@
 
             if (type === 'chemical') {
                 const item = index >= 0 ? chemicalData[index] : {};
+                const todayDate = new Date().toISOString().split('T')[0];
+                const hazardsList = ["Explosive", "Flammable", "Oxidizing", "Gas Under Pressure", "Corrosive", "Toxic", "Irritant/Harmful", "Health Hazard", "Environment"];
+                const currentHazards = (item.hazard || "").split(",").map(h => h.trim());
+
                 body.innerHTML = `
                 <div class="form-group">
                     <label>Chemical Name</label>
@@ -1490,9 +1602,35 @@
                         <input type="text" id="inp-formula" class="form-control" value="${item.formula || ''}">
                     </div>
                     <div style="flex:1;">
-                        <label>Hazard Class</label>
-                        <input type="text" id="inp-hazard" class="form-control" value="${item.hazard || ''}">
+                        <label>CAS Number</label>
+                        <input type="text" id="inp-cas" class="form-control" placeholder="XXX-XX-X" value="${item.casNumber || ''}">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Hazard Identification (Select all that apply)</label>
+                    <div class="hazard-grid" id="hazard-checks">
+                        ${hazardsList.map(h => `
+                            <label class="hazard-item">
+                                <input type="checkbox" name="hazard" value="${h}" ${currentHazards.includes(h) ? 'checked' : ''}>
+                                ${h}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Chemical Group</label>
+                    <select id="inp-chemgroup" class="form-control">
+                        <option value="" ${!item.chemicalGroup ? 'selected' : ''}>Select Group</option>
+                        <option value="Flammable Liquids" ${item.chemicalGroup === 'Flammable Liquids' ? 'selected' : ''}>Flammable Liquids</option>
+                        <option value="Acids" ${item.chemicalGroup === 'Acids' ? 'selected' : ''}>Acids</option>
+                        <option value="Bases" ${item.chemicalGroup === 'Bases' ? 'selected' : ''}>Bases</option>
+                        <option value="Oxidizers" ${item.chemicalGroup === 'Oxidizers' ? 'selected' : ''}>Oxidizers</option>
+                        <option value="Toxics/Poisons" ${item.chemicalGroup === 'Toxics/Poisons' ? 'selected' : ''}>Toxics/Poisons</option>
+                        <option value="Water-Reactive" ${item.chemicalGroup === 'Water-Reactive' ? 'selected' : ''}>Water-Reactive</option>
+                        <option value="Peroxide-Forming" ${item.chemicalGroup === 'Peroxide-Forming' ? 'selected' : ''}>Peroxide-Forming</option>
+                        <option value="Corrosives" ${item.chemicalGroup === 'Corrosives' ? 'selected' : ''}>Corrosives</option>
+                        <option value="General/Inert" ${item.chemicalGroup === 'General/Inert' ? 'selected' : ''}>General/Inert</option>
+                    </select>
                 </div>
                 <div class="form-group" style="display: flex; gap: 10px;">
                     <div style="flex:1;">
@@ -1518,16 +1656,30 @@
                     <label>Storage Location</label>
                     <input type="text" id="inp-location" class="form-control" value="${item.location || ''}">
                 </div>
+                <div class="form-group">
+                    <label>Date of Entry</label>
+                    <input type="date" id="inp-dateentry" class="form-control" value="${item.dateEntry || todayDate}">
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea id="inp-remarks" class="form-control" rows="2" placeholder="Additional notes...">${item.remarks || ''}</textarea>
+                </div>
             `;
             } else {
                 const item = index >= 0 ? apparatusData[index] : {};
                 body.innerHTML = `
-                <div class="form-group">
-                    <label>Apparatus Name</label>
-                    <input type="text" id="inp-name" class="form-control" list="app-suggestions" value="${item.name || ''}" oninput="autoFillApparatus()">
-                    <datalist id="app-suggestions">
-                        ${Object.keys(apparatusKB).map(k => `<option value="${k}">`).join('')}
-                    </datalist>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex:2;">
+                        <label>Apparatus Name</label>
+                        <input type="text" id="inp-name" class="form-control" list="app-suggestions" value="${item.name || ''}" oninput="autoFillApparatus()">
+                        <datalist id="app-suggestions">
+                            ${Object.keys(apparatusKB).map(k => `<option value="${k}">`).join('')}
+                        </datalist>
+                    </div>
+                    <div style="flex:1;">
+                        <label>Capacity / Size</label>
+                        <input type="text" id="inp-spec" class="form-control" placeholder="e.g., 500 mL" value="${item.spec || ''}">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Category</label>
@@ -1547,17 +1699,31 @@
                         <input type="number" id="inp-qty" class="form-control" value="${item.quantity || ''}">
                     </div>
                     <div style="flex:1;">
-                        <label>Condition</label>
-                        <select id="inp-condition" class="form-control">
-                            <option value="Good" ${item.condition === 'Good' ? 'selected' : ''}>Good</option>
-                            <option value="Damaged" ${item.condition === 'Damaged' ? 'selected' : ''}>Damaged</option>
-                            <option value="For Repair" ${item.condition === 'For Repair' ? 'selected' : ''}>For Repair</option>
+                        <label>Unit</label>
+                        <select id="inp-unit" class="form-control">
+                            <option value="pcs" ${item.unit === 'pcs' ? 'selected' : ''}>pcs</option>
+                            <option value="set" ${item.unit === 'set' ? 'selected' : ''}>set</option>
+                            <option value="box" ${item.unit === 'box' ? 'selected' : ''}>box</option>
+                            <option value="roll" ${item.unit === 'roll' ? 'selected' : ''}>roll</option>
+                            <option value="pack" ${item.unit === 'pack' ? 'selected' : ''}>pack</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>Condition</label>
+                    <select id="inp-condition" class="form-control">
+                        <option value="Good" ${item.condition === 'Good' ? 'selected' : ''}>Good</option>
+                        <option value="Damaged" ${item.condition === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                        <option value="For Repair" ${item.condition === 'For Repair' ? 'selected' : ''}>For Repair</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Storage Location</label>
                     <input type="text" id="inp-location" class="form-control" value="${item.location || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea id="inp-remarks" class="form-control" rows="2" placeholder="Condition details or notes...">${item.remarks || ''}</textarea>
                 </div>
             `;
             }
@@ -1579,24 +1745,33 @@
             }
 
             if (currentMode === 'chemical') {
+                const selectedHazards = Array.from(document.querySelectorAll('input[name="hazard"]:checked')).map(cb => cb.value).join(",");
+
                 const newItem = {
                     name: name,
                     formula: document.getElementById('inp-formula').value,
+                    casNumber: document.getElementById('inp-cas').value,
+                    hazard: selectedHazards,
+                    chemicalGroup: document.getElementById('inp-chemgroup').value,
                     quantity: qty,
                     unit: document.getElementById('inp-unit').value,
-                    hazard: document.getElementById('inp-hazard').value,
                     expiry: document.getElementById('inp-expiry').value,
-                    location: loc
+                    location: loc,
+                    dateEntry: document.getElementById('inp-dateentry').value,
+                    remarks: document.getElementById('inp-remarks').value
                 };
                 if (editIndex >= 0) chemicalData[editIndex] = newItem;
                 else chemicalData.push(newItem);
             } else {
                 const newItem = {
                     name: name,
+                    spec: document.getElementById('inp-spec').value,
                     category: document.getElementById('inp-category').value,
                     quantity: qty,
+                    unit: document.getElementById('inp-unit').value,
                     condition: document.getElementById('inp-condition').value,
-                    location: loc
+                    location: loc,
+                    remarks: document.getElementById('inp-remarks').value
                 };
                 if (editIndex >= 0) apparatusData[editIndex] = newItem;
                 else apparatusData.push(newItem);
@@ -1618,7 +1793,19 @@
             const name = document.getElementById('inp-name').value;
             if (chemicalKB[name]) {
                 document.getElementById('inp-formula').value = chemicalKB[name].formula;
-                document.getElementById('inp-hazard').value = chemicalKB[name].hazard;
+
+                // Set Hazards
+                const hazards = (chemicalKB[name].hazard || "").split(",").map(h => h.trim());
+                document.querySelectorAll('input[name="hazard"]').forEach(cb => {
+                    cb.checked = hazards.includes(cb.value);
+                });
+
+                if (chemicalKB[name].casNumber) {
+                    document.getElementById('inp-cas').value = chemicalKB[name].casNumber;
+                }
+                if (chemicalKB[name].chemicalGroup) {
+                    document.getElementById('inp-chemgroup').value = chemicalKB[name].chemicalGroup;
+                }
             }
         }
 
@@ -1682,11 +1869,45 @@
                 return;
             }
 
-            const headers = Object.keys(data[0]).join(',');
-            const rows = data.map(obj => Object.values(obj).join(',')).join('\n');
-            const csvContent = "data:text/csv;charset=utf-8," + headers + '\n' + rows;
+            let csvContent = "";
+            if (type === 'chemicals') {
+                const headers = ["Name", "Formula", "CAS No.", "Hazard ID", "Chem. Group", "Qty", "Unit", "Expiry", "Location", "Date Entry", "Remarks"];
+                csvContent += headers.join(',') + '\n';
+                data.forEach(item => {
+                    const row = [
+                        `"${item.name || ''}"`,
+                        `"${item.formula || ''}"`,
+                        `"${item.casNumber || ''}"`,
+                        `"${item.hazard || ''}"`,
+                        `"${item.chemicalGroup || ''}"`,
+                        `"${item.quantity || ''}"`,
+                        `"${item.unit || ''}"`,
+                        `"${item.expiry || ''}"`,
+                        `"${item.location || ''}"`,
+                        `"${item.dateEntry || ''}"`,
+                        `"${item.remarks || ''}"`
+                    ];
+                    csvContent += row.join(',') + '\n';
+                });
+            } else {
+                const headers = ["Name", "Specification", "Category", "Qty", "Unit", "Condition", "Location", "Remarks"];
+                csvContent += headers.join(',') + '\n';
+                data.forEach(item => {
+                    const row = [
+                        `"${item.name || ''}"`,
+                        `"${item.spec || ''}"`,
+                        `"${item.category || ''}"`,
+                        `"${item.quantity || ''}"`,
+                        `"${item.unit || ''}"`,
+                        `"${item.condition || ''}"`,
+                        `"${item.location || ''}"`,
+                        `"${item.remarks || ''}"`
+                    ];
+                    csvContent += row.join(',') + '\n';
+                });
+            }
 
-            const encodedUri = encodeURI(csvContent);
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", `sjis_${type}_inventory.csv`);
@@ -1743,49 +1964,68 @@
                 const tableData = data.map(item => [
                     item.name,
                     item.formula || '-',
+                    item.casNumber || '-',
+                    item.hazard || '-',
+                    item.chemicalGroup || '-',
                     item.quantity,
                     item.unit,
-                    item.hazard || 'Safe',
                     item.expiry || '-',
-                    item.location
+                    item.location,
+                    item.dateEntry || '-',
+                    item.remarks || '-'
                 ]);
 
                 doc.autoTable({
                     startY: 48,
-                    head: [['Name', 'Formula', 'Qty', 'Unit', 'Hazard', 'Expiry', 'Location']],
+                    head: [['Name', 'Formula', 'CAS No.', 'Hazard ID', 'Chem. Group', 'Qty', 'Unit', 'Expiry', 'Location', 'Date Entry', 'Remarks']],
                     body: tableData,
                     theme: 'striped',
                     headStyles: {
                         fillColor: [0, 128, 128],
                         textColor: [255, 255, 255],
                         fontStyle: 'bold',
-                        fontSize: 10
+                        fontSize: 8
                     },
                     styles: {
-                        fontSize: 9,
-                        cellPadding: 3
+                        fontSize: 7,
+                        cellPadding: 2
                     },
                     alternateRowStyles: {
                         fillColor: [248, 249, 250]
                     },
-                    margin: { left: 14, right: 14 }
+                    margin: { left: 10, right: 10 },
+                    columnStyles: {
+                        0: { cellWidth: 'auto' },
+                        1: { cellWidth: 15 },
+                        2: { cellWidth: 15 },
+                        3: { cellWidth: 25 },
+                        4: { cellWidth: 18 },
+                        5: { cellWidth: 10 },
+                        6: { cellWidth: 10 },
+                        7: { cellWidth: 15 },
+                        8: { cellWidth: 15 },
+                        9: { cellWidth: 15 },
+                        10: { cellWidth: 'auto' }
+                    }
                 });
             } else {
                 const tableData = data.map(item => [
-                    item.name,
+                    item.name + (item.spec ? ` (${item.spec})` : ''),
                     item.category || '-',
                     item.quantity,
+                    item.unit || 'pcs',
                     item.condition || 'Good',
-                    item.location
+                    item.location,
+                    item.remarks || '-'
                 ]);
 
                 doc.autoTable({
                     startY: 48,
-                    head: [['Name', 'Category', 'Qty', 'Condition', 'Location']],
+                    head: [['Name (Spec)', 'Category', 'Qty', 'Unit', 'Condition', 'Location', 'Remarks']],
                     body: tableData,
                     theme: 'striped',
                     headStyles: {
-                        fillColor: [44, 62, 80],
+                        fillColor: [0, 128, 128],
                         textColor: [255, 255, 255],
                         fontStyle: 'bold',
                         fontSize: 10
@@ -1807,7 +2047,7 @@
                 doc.setFontSize(8);
                 doc.setTextColor(150, 150, 150);
                 doc.text('This is a system-generated report.', pageWidth / 2, pageHeight - 15, { align: 'center' });
-                doc.text('© 2026 San Jose Integrated School', pageWidth / 2, pageHeight - 10, { align: 'center' });
+                doc.text('© 2026 SAN JOSE INTEGRATED SCHOOL', pageWidth / 2, pageHeight - 10, { align: 'center' });
             }
 
             // Save PDF
@@ -1835,5 +2075,3 @@
 </body>
 
 </html>
-
-
